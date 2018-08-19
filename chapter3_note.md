@@ -55,19 +55,30 @@
    - MOVS类指令中的`cltq`是将`%eax`符号扩展为`%rax`
 3. 压入和弹出数据 --> `push S & pop D`
    > push & pop指令是对程序栈进行数据操作的，程序栈是由栈指针`%rsp`保存地址的连续内存区域，当前`%rsp`指向的内存为栈顶  
-   - `pushq S` --> `subq $8, %rsp; movq S,(%rsp)`
-   - `popq D` --> `movq (%rsp),D; addq $8, %rsp`
+   - `pushq S` --> `subq $8,%rsp`; `movq S,(%rsp)`
+   - `popq D` --> `movq (%rsp),D`; `addq $8,%rsp`
 ### 算术和逻辑
 1. 加载有效地址--> `leaq S,D`
    - S为内存地址，D为寄存器
    - 指令并不从内存中取值，而是操作内存地址（Adrr）本身
    - Adrr有一套计算公式，这样`leaq`指令具有做简单计算的功能
 2. 一元和二元操作
-   - 一元指令：INC D: D自加；DEC D：D自减；NEG D: D取负；NOT D：D取补
-   - 二元指令：ADD S，D；SUB S, D; IMUL S, D; XOR S, D; OR S, D; AND S, D
+   - 一元指令：`INC D`:D自加；`DEC D`:D自减；`NEG D`:D取负；`NOT D`:D取补
+   - 二元指令：`ADD S,D`；`SUB S,D`; `IMUL S,D`; `XOR S,D`; `OR S,D`; `AND S,D`
 3. 移位操作
    - 左移：SAL k, D/ SHL k, D; 算术右移：SAR k, D; 逻辑右移：SHR k，D
    >移位量k可以是立即数，也可以是存放在寄存器`%cl`中的数（即，移位的编码范围达255）；假设，操作数的位数为w，而2^m=w,则`%cl`中低m位B2U(m)=k
+4. 特殊的算术操作
+128位乘法及64位除法
+   - 指令:`imulq S`:有符号乘法; `mulq S`:无符号乘法; `idivq S`:有符号除法; `divq S`:无符号除法; `clto`:扩展%rax的符号位
+   - 对于乘法操作数S作为一个显式的乘数,另一个乘数固定为寄存器%rax中的值;积为128位,其高64位的值存入%rdx中,低64位存入%rax中
+   - 对于除法操作数S为除数,被除数固定为128位的寄存器:高64位为%rdx,低64位为%rax,其商存入%rax中,余数存入%rdx中
+   - 另外,对于有符号被除数其高64位由`clto`指令将%rax中的符号扩展至%rdx中
+## 控制
+### 条件码
+与整数寄存器一样,条件码寄存器也是用来描述CPU状态,其展示了最近一次算术或逻辑运算的属性
+1. 最常用的条件码有:
+   条件码|标志
 
 
 
