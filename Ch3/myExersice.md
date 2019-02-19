@@ -1,5 +1,6 @@
 #### 3.8
 目的|值
+---|---
 0x100|0x100
 0x108|0xA8
 0x118|0x110
@@ -32,7 +33,7 @@ long arith2(long x, long y, long z)
 2. movq $0,%rdx
 3. 经过测试，3<7
 #### 3.12
-*void uremdiv(unsigned long x, unsigned long y, unsigned long *qp, unsigned long *rp)*
+*void uremdiv(unsigned long x, unsigned long y, unsigned long *qp, unsigned long *rp)*  
 *x in %rdi, y in %rsi, qp in %rdx, rp in %rcx*
 ```
 uremdiv:  
