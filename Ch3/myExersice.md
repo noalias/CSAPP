@@ -72,5 +72,69 @@ void cond(long a, long *p)
 done:
 }
 ```
-2. `p && a >
-   *p`中_**&&**_操作符具有短路特性，左表达式为零，则不再测试右表达式.
+2. `p && a > *p`中**&&**操作符具有短路特性，左表达式为零，则不再测试右表达式.
+#### 3.17
+1. goto的另一种形式
+```
+long gotodiff_se(long x, long y)
+{
+    long result;
+    if (x < y)
+        goto x_l_y;
+    ge_cnt++;
+    result = x - y;
+    return result;
+x_l_y:
+    lt_cn++;
+    result = y - x;
+    return result;
+}
+```
+2. 两种表达式都可行，对于无else分支的if语句：
+```
+t = test_expr;
+if (t)
+    goto ture;
+goto done;
+ture:
+    then_statement;
+done:
+
+t = test_expr;
+if (!t)
+    goto done;
+then_statement;
+done:
+```
+显然上述后者表达式更简洁
+#### 3.18
+```
+long test(long x, long y, long z)
+{
+    long val = x + y + z;
+    if (x < -3) {
+        if (y < z)
+            val = x * y;
+        else
+            val = y * z;
+    } else if (x > 2)
+        val = x * z;
+    return val;
+}
+```
+#### 3.19
+1. 31 = 16 + 0.5Tmp -> Tmp = 30
+2. 16 + 31 = 47
+#### 3.20
+1. `#define OP ((< 0 ? (x) + 7 : (x)) / )`
+2. 注释  
+_long arith(long x)_
+_x in %rdi_
+```
+arith:
+  leaq 7(%rdi),%rax   *store x + 7*
+  testq %rdi,%rdi     *test x*
+  cmovns %rdi,%rax    *if >= 0, store x*
+  sarq $3,%rax        *x >>= 3*
+  ret                 *retrun x*
+```
