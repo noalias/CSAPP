@@ -33,7 +33,7 @@ long arith2(long x, long y, long z)
 2. movq $0,%rdx
 3. 经过测试，3<7
 #### 3.12
-_void uremdiv(unsigned long x, unsigned long y, unsigned long *qp, unsigned long *rp)_ 
+_void uremdiv(unsigned long x, unsigned long y, unsigned long *qp, unsigned long *rp)_   
 *x in %rdi, y in %rsi, qp in %rdx, rp in %rcx*
 ```
 uremdiv:  
