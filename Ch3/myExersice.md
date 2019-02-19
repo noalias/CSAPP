@@ -72,7 +72,7 @@ void cond(long a, long *p)
 done:
 }
 ```
-2. `p && a > *p`中**&&**操作符具有短路特性，左表达式为零，则不再测试右表达式.
+2. `p && a > \*p`中**&&**操作符具有短路特性，左表达式为零，则不再测试右表达式.
 #### 3.17
 1. goto的另一种形式
 ```
@@ -128,13 +128,13 @@ long test(long x, long y, long z)
 #### 3.20
 1. `#define OP ((< 0 ? (x) + 7 : (x)) / )`
 2. 注释  
-_long arith(long x)_
+_long arith(long x)_  
 _x in %rdi_
 ```
 arith:
-  leaq 7(%rdi),%rax   *store x + 7*
-  testq %rdi,%rdi     *test x*
-  cmovns %rdi,%rax    *if >= 0, store x*
-  sarq $3,%rax        *x >>= 3*
-  ret                 *retrun x*
+  leaq 7(%rdi),%rax   // store x + 7
+  testq %rdi,%rdi     // test x
+  cmovns %rdi,%rax    // if >= 0, store x
+  sarq $3,%rax        // x >>= 3
+  ret                 // retrun x
 ```
