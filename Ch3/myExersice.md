@@ -72,7 +72,7 @@ void cond(long a, long *p)
 done:
 }
 ```
-2. `p && a > \*p`中**&&**操作符具有短路特性，左表达式为零，则不再测试右表达式.
+2. `p && a > *p`中&&操作符具有短路特性，左表达式为零，则不再测试右表达式.
 #### 3.17
 1. goto的另一种形式
 ```
@@ -99,7 +99,6 @@ goto done;
 ture:
     then_statement;
 done:
-
 t = test_expr;
 if (!t)
     goto done;
@@ -138,3 +137,175 @@ arith:
   sarq $3,%rax        // x >>= 3
   ret                 // retrun x
 ```
+#### 3.21
+```
+long test(long x, long y)
+{
+    long val = 8 * x;
+    if (y > 0) {
+        if (x < y) 
+            val = y - x;
+        else
+            val = x & y;
+    } else if (y <= -2)
+        val = y + x;
+    return val;
+}
+```
+#### 3.23
+1. x -> %rdi, y -> %rcx, n -> %rdx
+2. \*p就是x本身，(\*p)++就是x++；
+3. 注释
+*long dw_loop(long x)*  
+*x initially in %rdi*
+```
+dw_loop:
+  movq %rdi,%rax               // store x
+  movq %rdi,%rcx               
+  imulq %rdi,%rcx              // y = x*x
+  leaq (%rdi,%rdi),%rdx        // n = 2*x
+.L2:                           // loop:
+  leaq 1(%rcx,%rax),%rax       // x = x + y + 1
+  subq $1,%rdx                 // n--
+  testq %rdx,%rdx              // test n
+  jg .L2                       // if > 0, goto loop
+  rep;ret                      // return x
+```
+#### 3.25
+```
+long long_while2(long a, long b)
+{
+    long result = b;
+    while (b > 0) {
+        result = b * a;
+        b = b - a;
+    }
+    return result;
+}
+```
+#### 3.26
+1. 跳转中间
+2. c代码
+```
+long fun_a(unsigned long x)
+{
+    long val = 0;
+    while (x != 0) {
+        val ^= x;
+        x >>= 1;
+    }
+    return val & 1;
+}
+```
+3. 返回x位级表示，有多少个1，函数返回值是val &
+   1，掩码1使val最低位有效，这样在循环中x中的每一位都与val最低位进行异或操作，最终的值反应了x位级表示中有奇数还是偶数个1
+#### 3.27
+```
+long fact_for(long n)
+{
+    long i = 2;
+    long result = 1;
+    if (i > n)
+        goto done;
+loop:
+    result *= i;
+    i++;
+    if (i <= n)
+        goto loop;
+done:
+    return result;
+}
+```
+#### 3.28
+1. c代码
+```
+long fun_b(unsigned long x)
+{
+    long val = 0;
+    long i;
+    for (i = 64; i; i--) {
+         val = x & 1 | 2 * val;              // val = val << 1 | x & 0x1;
+         x >>= 1;
+    }
+    return val;
+}
+```
+2. i初始为64，再测试i是否等于0，是没有必要的
+3. 将x的位级表示颠倒过来
+#### 3.29
+1. for -> while 循环代码
+```
+long sum = 0;
+long i = 0;
+while (i < 10) {
+    if (i & 1)
+        continue;
+    sum += i;
+    i++;
+}
+```
+显然表达式`i&1`等于0式，`i++`将被跳过；
+2. goto 代码
+```
+long sum = 0;
+long i = 0;
+while (i < 10) {
+    if (i & 1)
+        goto L1;
+    sum += i;
+L1:
+    i++;
+}
+```
+#### 3.30
+1. 跳转表
+```
+.L4:
+  .quad   .L9          0 -> -1
+  .quad   .L5          1 -> 0
+  .quad   .L6          2 -> 1
+  .quad   .L7          3 -> 2
+  .quad   .L2          4 -> default
+  .quad   .L7          5 -> 4 
+  .quad   .L8          6 -> 5
+  .quad   .L2          7 -> default
+  .quad   .L5          8 -> 7
+```
+C语言标号有：-1,0,1,2,4,5,7,default
+2. default, 2和4, 0和7
+#### 3.31
+``` 
+void switcher(long a, long b, long c, long \*dest)
+{
+    long val;
+    switch(a) {
+        case 5:
+            c = b ^ 15;
+            /* Fall through */
+        case 0:
+            val = c + 112;
+            break;
+        case 2:
+        case 7:
+            val = (b + c) << 2;
+            break;
+        default:
+            val = b;
+    }
+    *dest = val;
+}
+```
+#### 3.32
+标号|PC|指令|%rdi|%rsi|%rax|%rsp|*%rsp|描述
+---|---|---|---|---|---|---|---|---
+M1|0x400560|callq|10|-|-|0x7fffffffe820|-|调用first(10)
+F1|0x400548|lea|10|-|-|0x7fffffffe818|0x400565|计算x+1
+F2|0x40054c|sub|10|11|-|0x7fffffffe818|0x400565|计算x-1
+F3|0x400550|callq|9|11|-|0x7fffffffe818|0x400565|调用last(9,11)
+L1|0x400540|mov|9|11|-|0x7fffffffe810|0x400555|存储9
+L2|0x400543|imul|9|11|9|0x7fffffffe810|0x400555|9X11
+L3|0x400547|retq|9|11|99|0x7fffffffe810|0x400555|返回
+F4|0x400555|retq|9|11|99|0x7fffffffe818|0x400565|返回
+M2|0x400565|mov|9|11|99|0x7fffffffe820|-|保存
+
+
