@@ -197,8 +197,7 @@ long fun_a(unsigned long x)
     return val & 1;
 }
 ```
-3. 返回x位级表示，有多少个1，函数返回值是val &
-   1，掩码1使val最低位有效，这样在循环中x中的每一位都与val最低位进行异或操作，最终的值反应了x位级表示中有奇数还是偶数个1
+3. 返回x位级表示，有多少个1，函数返回值是val & 1，掩码1使val最低位有效，这样在循环中x中的每一位都与val最低位进行异或操作，最终的值反应了x位级表示中有奇数还是偶数个1
 #### 3.27
 ```
 long fact_for(long n)
@@ -296,7 +295,7 @@ void switcher(long a, long b, long c, long \*dest)
 }
 ```
 #### 3.32
-标号|PC|指令|%rdi|%rsi|%rax|%rsp|*%rsp|描述
+标号|PC|指令|%rdi|%rsi|%rax|%rsp|\*%rsp|描述
 ---|---|---|---|---|---|---|---|---
 M1|0x400560|callq|10|-|-|0x7fffffffe820|-|调用first(10)
 F1|0x400548|lea|10|-|-|0x7fffffffe818|0x400565|计算x+1
@@ -307,5 +306,38 @@ L2|0x400543|imul|9|11|9|0x7fffffffe810|0x400555|9X11
 L3|0x400547|retq|9|11|99|0x7fffffffe810|0x400555|返回
 F4|0x400555|retq|9|11|99|0x7fffffffe818|0x400565|返回
 M2|0x400565|mov|9|11|99|0x7fffffffe820|-|保存
-
-
+#### 3.33
+`procprob(int a, short b, long *u, char *v)`或`procprob(int b, short a, long *v, char *u)`
+#### 3.34
+1. a0~a5
+2. a6~a7
+3. 被调用者寄存器数量有限
+#### 3.35
+1. %rbx中存储过程rfun的形参
+2. c代码
+```
+long rfun(unsigned long x)
+{
+    if (x) 
+        return 0;
+    unsigned long nx = x / 2;
+    long rv = rfun(nx);
+    return x + rv;
+}
+```
+#### 3.36
+数组|元素大小|整个数组的大小|起始地址|元素i
+---|---|---|---|---
+S|2|14|xS|xS+2i
+T|8|24|xT|xT+8i
+U|8|48|xU|xU+8i
+V|4|32|xV|xV+4i
+W|8|32|xW|xW+8i
+#### 3.37
+表达式|类型|值|汇编代码
+---|---|---|---
+S+1|short *|xs+2|leaq 3(%rdx,) %rax
+S[3]|short|M[xs+3*2]|movb 6(%rdx,) %ax
+&S[i]|short *|xs+2i|leaq (%rdx,%rcx,2) %rax
+S[4*i+1]|short|M[xs+8i+2]|movb 2(%rdx,%rcx,8) %ax
+S+i-5|short *|xs+2i-5|leaq -5(%rdx,%rcx,2) %rax
