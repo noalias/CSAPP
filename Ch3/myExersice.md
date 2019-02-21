@@ -337,8 +337,70 @@ W|8|32|xW|xW+8i
 #### 3.37
 表达式|类型|值|汇编代码
 ---|---|---|---
-S+1|short *|xs+2|leaq 3(%rdx,) %rax
-S[3]|short|M[xs+3*2]|movb 6(%rdx,) %ax
-&S[i]|short *|xs+2i|leaq (%rdx,%rcx,2) %rax
-S[4*i+1]|short|M[xs+8i+2]|movb 2(%rdx,%rcx,8) %ax
-S+i-5|short *|xs+2i-5|leaq -5(%rdx,%rcx,2) %rax
+S+1|short \*|xs+2|leaq 3(%rdx), %rax
+S[3]|short|M[xs+6]|movb 6(%rdx), %ax
+&S[i]|short \*|xs+2i|leaq (%rdx,%rcx,2), %rax
+S[4\*i+1]|short|M[xs+8i+2]|movb 2(%rdx,%rcx,8), %ax
+S+i-5|short \*|xs+2i-10|leaq -10(%rdx,%rcx,2), %rax
+#### 3.38
+*long sum_element(long i, long j)*  
+*i in %rdi, j in %rsi*  
+```
+sum_element
+  leaq 0(,%rdi,8), %rdx          //8i
+  subq %rdi,%rdx                 //7i
+  addq %rsi,%rdx                 //%rdx->7i+j
+  leaq (%rsi,%rsi,4), %rax       //5j
+  addq %rax,%rdi                 //%rdi->5j+i
+  movq Q(,%rdi,8), %rax          //Q[N][M]->8(j*M+i)=8(5j+i)->M=5
+  addq P(,%rdx,8), %rax          //P[M][N]->8(i*N+j)=8(7i+j)->N=7
+  ret
+```
+M=5,N=7
+#### 3.39
+*&D[i][j]=xd+L(Cxi+j)*  
+*N=16*  
+&A[i][0]=A+4x(ixN+0)=A+4Ni=A+64i  
+&B[0][k]=B+4k  
+&B[N][k]=B+4(16N+k)=B+4k+1024
+#### 3.40
+```
+void fix_set_diag_opt(fix_matrix A, int val)
+{
+    int *Aptr = &A[0][0];
+    int *Aend = &A[N][N];
+
+    do {
+        *Aptr = val;
+        Aptr += N + 1;
+    } while(Aptr != Aend); 
+}
+```
+#### 3.41
+1. p:0; s.x:8; s.y:12; next:16
+2. 24
+3. C代码
+```
+void sp_init(struct prob \*sp)
+{
+    sp->s.x = sp->s.y;
+    sp->p = &sp->s.x;
+    sp->next = sp;
+}
+```
+#### 3.42
+1. C代码
+```
+long fun(struct ELE \*ptr)
+{
+    long result = 0;
+
+    while(ptr) {
+        result += ptr->v;
+        ptr = ptr->p;
+    }
+
+    return result;
+}
+```
+2. 实现了数据结构链表，将链表中的数据叠加
