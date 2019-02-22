@@ -404,3 +404,12 @@ long fun(struct ELE \*ptr)
 }
 ```
 2. 实现了数据结构链表，将链表中的数据叠加
+#### 3.43
+expr|type|代码
+---|---|---
+up->t1.u|long|movq (%rdi),%rax; movq %rax,(%rsi)
+up->t1.v|short|movb 8(%rdi),%ax; movb %ax,(%rsi)
+&up->t1.w|char \*|leaq 12(%rdi),%rax; movq %rax,(%rsi)
+up->t2.a|int \*|leaq (%rdi),%rax; movq %rax,(%rsi)
+up->t2.a[up->t1.u]|movq (%rdi),%rax; movl (%rdi,%rax,8),%edx; movl %edx,(%rsi)
+\*up->t2.p|char|movb 8(%rdi),%al; movb %al,(%rsi)
