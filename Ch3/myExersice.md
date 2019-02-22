@@ -408,8 +408,16 @@ long fun(struct ELE \*ptr)
 expr|type|代码
 ---|---|---
 up->t1.u|long|movq (%rdi),%rax; movq %rax,(%rsi)
-up->t1.v|short|movb 8(%rdi),%ax; movb %ax,(%rsi)
-&up->t1.w|char \*|leaq 12(%rdi),%rax; movq %rax,(%rsi)
-up->t2.a|int \*|leaq (%rdi),%rax; movq %rax,(%rsi)
-up->t2.a[up->t1.u]|int|movq (%rdi),%rax; movl (%rdi,%rax,8),%edx; movl %edx,(%rsi)
-\*up->t2.p|char|movb 8(%rdi),%al; movb %al,(%rsi)
+up->t1.v|short|movw 8(%rdi),%ax; movw %ax,(%rsi)
+&up->t1.w|char \*|leaq 10(%rdi),%rax; movq %rax,(%rsi)
+up->t2.a|int \*|movq %rdi,(%rsi)
+up->t2.a[up->t1.u]|int|movq (%rdi),%rax; movl (%rdi,%rax,4),%edx; movl %edx,(%rsi)
+\*up->t2.p|char|movq 8(%rdi),%rax; movb (%rax),%al; movb %al,(%rsi)
+#### 3.44
+标识符|元素1|元素2|元素3|元素4|数据总量
+---|---|---|---|---|---
+P1|0|4|8|12|16字节
+P2|0|4|5|8|16字节
+P3|0|6|-|-|10字节
+P4|0|16|-|-|30字节
+P5|0|20|-|-|36字节
