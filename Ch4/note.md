@@ -82,4 +82,36 @@ word alufun = [
 bool set_cc = icode in { IOPQ }; # 在执行哦opq命令时，设置条件码
 # 信号cnd根据条件码set_cc与功能码ifun进行设置
 ```
-#### 访存
+#### 访存阶段
+此阶段包含数据内存。
+1. **数据内存**受时钟控制，输入是mem_addr数据地址、mem_data写入数据，输出为valM读出数据，同时受mem_read读、mem_write写信号控制。状态码。
+```
+word mem_addr = [     #数据内存读或写的地址
+    icode in { IRMMOVQ, IMRMOVQ, IPUSHQ, ICALL } : valE;
+    icode in { IPOPQ, IRET } : valA;
+];
+word mem_data = [     #写入到数据内存的值
+    icode in { IRMMOVQ, IPUSHQ } : valA;
+    icode in { ICALL } : valP;
+];
+bool mem_read = icode in { IMRMOVQ, IPOPQ, IRET }; #读信号
+bool mem_write = icode in { IRMMOVQ, IPUSHQ, ICALL }; #写信号
+word stat = [
+    imem_error || dmem_error : SADR; # 地址异常
+    !instr_valid : SINS; # 非法指令异常,注意这里是对instr_valid取反
+    icode == IHALT : SHLT; # halt状态码
+    1 : SAOK; # 正常操作
+];
+```
+#### 更新PC
+此阶段包含程序计数器的值。
+1. PC根据信号输入valC、valM及valP。
+```
+word new_pc = [
+    icode == ICALL : valC; #call指令将PC更新为valC
+    (icode == IJXX) && cnd : valC; #jxx在cnd为1时，将PC更新为valC
+    icode == IRET : valM; #ret指令将PC更新为valM（数据内存中读出的值）
+    1 : valP; #其它指令将PC更新为valP
+];
+```
+
