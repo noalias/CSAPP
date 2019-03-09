@@ -15,5 +15,49 @@ word Out = [
 ```
 - 集合：`in {..}`
   > 表达式`bool s1 = code == 2 || code == 3`，表示code为2或3时，s1为1，可简化为`bool s1 = code in {2， 3}；`，集合表达式得到的是一个位级信号。
-### 储存器
-
+## 硬件及HCL描述
+### Y86-64的指令执行框架及硬件组成
+1. 取指阶段  
+取指阶段包括指令内存(只读存储器)硬件单元和PC增加器。  
+**指令内存**接受时钟信号控制，输入为PC，输出包括：icode、ifun、rA、rB及valC,错误信号imem_error。根据need_regids信号输出rA、rB及valC。
+```
+int icode = [
+    imem_error : INOP;
+    1 : icode;
+];
+bool need_regids = 
+    icode in { IRRMOVQ, IIRMOVQ, IRMMOVQ, IMRMOVQ, IOPQ, IPUSHQ, IPOPQ };
+\#need_regids 为1时，rA：rB被设置成0xFF，同时valC输出字节1-8(从0算起)；否则，rA：rB输出字节1，valC输出字节3-9
+```
+**PC增加器**，输入为PC，信号need_valc、need_regids，输出valP。
+```
+\#PC的值为p, 指令字段长度1，寄存器字段长度1*r(r为need_regids),valc字段长度8*i(need_valc)
+word valp = p + 1 + r + 8*i
+```
+2. 译码和写回阶段  
+此阶段包括寄存件文件。  
+**寄存件文件**受时钟信号控制，输入valE(ALU计算输出)、valM(数据内存读出)，输出寄存器rA的值valA、寄存器rB的值valB，接受信号写端口dstE、dstM，读端口srcA及srcB控制。
+```
+\#译码阶段,根据srcA、srcB端口输入的寄存器id,取出rA、rB或%rsp寄存器中的值
+word srcA = [                # 此端口输入rA id
+    icode in { IOPQ, IRRMOVQ, IRMMOVQ, IPUSHQ } : rA;
+    icode in { IPOPQ, IRET } : RRSP;
+    1 : RONE;
+];
+word srcB = [
+    icode in { IOPQ, IRMMOVQ, IMRMOVQ } : rB;
+    icode in { IPUSHQ, IPOPQ, ICALL, IRET } : RRSP;
+    1 : RONE;
+];
+\#写回阶段，根据dstE、dstM端口输入寄存器id，在相应寄存器上写入值
+word dstE = [                    # 在rB对应的寄存器上写ALU入计算的值valE
+    icode in { IRRMOVQ } && cnd : rB; # 当条件传送时，根据条件cnd选择传送
+    icode in { IOPQ, IIRMOVQ } : rB;
+    icode in { IPUSHQ, IPOPQ, ICALL, IRET } : RRSP;
+    1 : RONE;
+];
+word dstM = [                    # 在rA对应的寄存器上写入从数据内存读出的值valM
+    icode in { IMRMOVQ, IPOPQ } : rA;
+    1 : RONE;
+];
+```
