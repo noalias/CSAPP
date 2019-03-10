@@ -105,7 +105,7 @@ word stat = [
 ```
 #### 更新PC
 此阶段包含程序计数器的值。
-1. PC根据信号输入valC、valM及valP。
+1. PC受时钟控制，根据信号输入valC、valM及valP。
 ```
 word new_pc = [
     icode == ICALL : valC; #call指令将PC更新为valC
@@ -114,4 +114,12 @@ word new_pc = [
     1 : valP; #其它指令将PC更新为valP
 ];
 ```
-
+#### 追踪opq指令的执行过程
+阶段|OPq rA，rB
+---|---
+取指|此时PC刚经过更新，指令内存根据地址读出icode、rA、rB的值，地址未越界imem_error设置为0，~~instr_valid设置为1~~，new_pc更新为p+1+1
+译码|根据icode值读出rA寄存器的值valA，rB寄存器的值valB
+执行|根据icode值对valB和valA进行op计算并得到valE值，并根据icode与op计算set_cc即条件码寄存器的输入值(要等到下次时钟更新，条件码寄存器的值才更新)
+访存|此阶段无动作
+写回|根据icode值将valE写回到rB寄存器对应的地址dstE中
+更新PC|根据icode值将new_pc更新到PC计数器中
