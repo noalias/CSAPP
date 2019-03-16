@@ -123,3 +123,46 @@ word new_pc = [
 访存|此阶段无动作
 写回|根据icode值将valE写回到rB寄存器对应的地址dstE中
 更新PC|根据icode值将new_pc更新到PC计数器中
+### PIPE各阶段的HCL描述
+#### PC选择和取指阶段
+```
+word f_pc = [
+    M_icode == IJXX && !M_Cnd : M_valA;          # M_valA记录IJxx指令的下一个指令的地址
+    W_icode == IRET : W_valM;                    # W_valM是从数据内存中取出的返回地址
+    1 : F_predPC;
+];
+word f_predPC = [
+    f_icode in { IJXX, ICALL } : f_valC;         # 从策略上，当遇到IJXX选择f_valC作为下条指令的取指地址
+    1 : f_valP;
+];
+word f_stat = [
+    imem_error : SADR;
+    !instr_valid : SINS;
+    f_icode == IHALT : SHLT;
+    1 : SAOK;
+];
+```
+#### 译码和写回阶段
+```
+word d_dstE = [
+    D_icode in { IRRMOVQ, IOPQ, IIRMOVQ } : D_rB;      # D_rB表示译码阶段的寄存器地址
+    D_icode in { IPUSHQ, IPOPQ, ICALL, IRET } : RRSP;
+    1 : RONE;
+];
+word d_valA = [
+    D_icode in { ICALL, IJXX } : D_valP;
+    d_srcA == e_dstE : e_valE;
+    d_srcA == M_dstM : m_valM;
+    d_srcA == M_dstM : M_valE;
+    d_srcA == W_dstM : W_valM;
+    d_srcA == W_dstE : W_valE;
+    1 : d_rvalA;
+];
+word d_valB = [
+    d_srcB == e_dstE : e_valE;
+    d_srcB == M_dstM : m_valM;
+    d_srcB == M_dstE : M_valE;
+    d_srcB == W_dstM : W_valM;
+    d_srcB == W_dstE : W_valE;
+    1 : d_rvalB;
+];
