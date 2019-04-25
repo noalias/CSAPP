@@ -34,6 +34,64 @@
 上下文切换过程中，内核将代替被抢占的进程及新启动的进程运行，直至恢复为新启动进程上下文。
 
 ### 进程控制
+操作进程主要有以下系统调用。
+```c
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/wait.h>
 
+pid_t getpid(void);       /* 返回调用者进程ID */
+pid_t getppid(void);      /* 返回调用者父进程ID */
+
+void exit(int status);    /* 以status退出状态来终止进程 */
+
+pid_t fork(void);         /* 调用者创建一个子进程，父进程中返回子进程PID，子进程中返回0，出错则为-1 */
+pid_t waitpid(pid_t pid, int *statusp, int options); /* 等待进程终止，返回进程PID */
+
+unsigned sleep(unsigned secs); /* 将进程挂起指定的时间，返回还要休眠的秒数 */
+int pause(void);           /* 让进程休眠，直到收到一个信号 */
+
+int execve(const char *filename, const char *argv[], const char *envp[]);                 /* 加载并运行一个新程序 */
+```
+
+以上，fork系统调用将创建一个子进程，子进程拥有父进程的上下文副本，父子进程并发运行，由于有相同的文件描述符，父子进程在运行时，共享同一文件。
+
+execve系统调用加载新程序，新程序将覆盖前程序的地址空间，但PID不变。execve函数运行后，进程将以新程序终止。
+```c
+// 加载程序pro1
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdio.h>
+
+extern char **environ;
+
+int main(int argc, char *argv[])
+{
+    if (execve(argv[1], &argv[1], environ) < 0) {
+        printf("%s: Command not found.\n",argv[1]);
+        exit(-1);
+    }
+    // 加载pro2后此后的指令将不会运行
+    printf("PID is %d.\n", (int)getpid());        
+    exit(100);
+}
+
+// 被加载程序pro2
+#include <stdlib.h>
+
+int main(void)
+{
+    return 200;           // pro2被加载后程序退出状态为200
+}
+
+----------------------------------------------------------
+命令行下运行：
+> ./pro1 pro2
+> echo $?
+> 200
+
+```
 ### 信号
 
