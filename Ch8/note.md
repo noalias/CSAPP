@@ -120,5 +120,109 @@ int setpgid(pid_t pid, pid_t pgid); /* 更改当前进程的进程组ID */
 int kill(pid_t pid, int sig);        /* 向进程pid发送信号sig */
 unsigned alarm(unsigned secs);       /* secs秒后向调用进程发送信号SIGALRM */
 ```
-#### 接受信号
+#### 接收信号
+目的进程被内核强迫对信号作出反应，被称为接收信号。进程可以忽略、终止或通过执行信号处理程序捕获信号。
+> 信号处理程序是如何捕获到信号的？
 
+发出而未被接收的信号，为__待处理信号__。一种信号最多有一个待处理信号。当一个类型为K信号发出时，内核会设置目的进程中的`pending`位向量K位，当K信号被目的进程接受，`pending`位向量K位被内核清除；当目的进程有一个K类型待处理信号，接下来的发送的K类型信号将被丢弃；目的进程可以**阻塞**待处理信号，使待处理信号不被接受，此时内核会设置`blocked`位向量。
+
+内核把进程从内核模式切换到用户模式时(如系统调用返回，或完成一次上下文切换），内核检查进程的未被阻塞的带处理信号(pending & ~blocked)，如果集合非空，内核将控制传递给下一个指令，否则，内核强制进程接收信号（通常是值最小的信号，这表明进程每次接收一次信号？）；收到信号后，进程会触发进程采取某种行为，完成行为后，进程将进入逻辑流下一条指令。
+
+每种信号都能触发进程默认行为，可以通过函数更改进程对信号的默认行为
+```c
+#include <signal.h>
+
+typedef void (*sighandler_t)(int);
+sighandler_t signal(int signum, sighandler_t handler);
+/* 如果handler是SIG_IGN，那么忽略signum
+ * 如果handler是SIG_DFL, 那么恢复signum信号的默认行为
+ * 如果handler是用户定义的函数地址，就会调用此函数
+ */
+```
+`handler`为信号处理程序，`signal`设置信号处理程序，调用信号处理程序称为__捕获信号__，执行信号处理程序被称为__处理信号__。
+
+> 对`signal`函数的理解:  
+> signal函数改变了内核强制目的进程对信号反应的行为，使`handler`函数替代了默认的处理程序，当进程的上下文切换后，内核检测到待处理信号，并强制进程调用`handler`函数。
+
+```c
+/* pro1 在发送信号前安装处理程序，这样处理程序总是可用 */
+#include <sys/types.h>
+#include <unistd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+
+void handler(int sig)
+{
+    printf("Caught SIGINT!\n");
+    return;
+}
+
+int main(void)
+{
+    int i;
+    if (signal(SIGINT, handler) == SIG_ERR) {   /* 安装处理程序 */
+        fprintf(stderr, "%s", "signal error");
+        exit(0);
+    }
+
+    for (i = 0; i < 10; i++) {                   /* 在某一刻，发送Ctrl+C信号 */
+        printf("请发送信号！\n");
+        sleep(1);
+    }
+
+    exit(2);
+}
+
+-----------------------------------------------------
+命令行： ./pro1
+> 请发送信号！
+> 请发送信号！
+> 请发送信号！
+> Ctrl+C
+> Caught SIGINT!
+> 请发送信号！
+> 请发送信号！
+> 请发送信号！
+> Ctrl+C
+> Caught SIGINT!
+此时程序继续运行
+-----------------------------------------------------
+/* pro2 在发送信号后安装处理程序，这样信号不能及时传递到处理程序 */
+#include <sys/types.h>
+#include <unistd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+void handler(int sig)
+{
+    printf("Caught SIGINT!\n");
+    return;
+}
+
+int main(void)
+{
+    int i;
+    for (i = 0; i < 10; i++) {                   /* 在某一刻，发送Ctrl+C信号 */
+        printf("请发送信号！\n");
+        sleep(1);
+    }
+
+    if (signal(SIGINT, handler) == SIG_ERR) {   /* 安装处理程序 */
+        fprintf(stderr, "%s", "signal error");
+        exit(0);
+    }
+    exit(2);
+}
+
+-----------------------------------------------------
+命令行： ./pro2
+> 请发送信号！
+> 请发送信号！
+> 请发送信号！
+> Ctrl+C
+> Caught SIGINT
+此时程序退出
+```
