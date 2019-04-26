@@ -223,6 +223,5 @@ int main(void)
 > 请发送信号！
 > 请发送信号！
 > Ctrl+C
-> Caught SIGINT
 此时程序退出
 ```
