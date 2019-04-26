@@ -94,4 +94,31 @@ int main(void)
 
 ```
 ### 信号
+内核和进程通过**信号**中断其它进程。
+
+#### 发送信号
+内核通过更新目的进程上下文的某个状态，发送一个进程给目的进程。发送信号的原因：1）内核监测到一个系统事件，2）进程调用了kill函数，显示要求内核发送一个信号给目的进程。
+
+向进程发送信号是基于进程组，每个进程只属于一个进程组。
+```c
+#include <unistd.h>
+pid_t getpgrp(void);             /* 返回进程的进程组ID */
+int setpgid(pid_t pid, pid_t pgid); /* 更改当前进程的进程组ID */
+```
+1. 使用`/bin/kill`程序向进程发送信号
+```sh
+> /bin/kill -9 15213            # 发送信号9给进程15213
+> /bin/kill -9 -15213           # 发送信号9给进程组15213中的每个进程
+```
+2. 使用键盘发送信号，shell中`Ctrl+c`终止前台作业，`Ctrl+z`挂起前台作业。
+3. 使用函数发送信号
+```c
+#include <sys/types.h>
+#include <signal.h>
+#include <unistd.h>
+
+int kill(pid_t pid, int sig);        /* 向进程pid发送信号sig */
+unsigned alarm(unsigned secs);       /* secs秒后向调用进程发送信号SIGALRM */
+```
+#### 接受信号
 
