@@ -225,3 +225,20 @@ int main(void)
 > Ctrl+C
 此时程序退出
 ```
+#### 阻塞和解除阻塞信号
+隐式阻塞，内核默认阻塞当前处理程序正在处理的信号类型的待处理信号。
+
+显式阻塞，程序调用`sigprocmask`函数和它的辅助函数，明确的阻塞和解除阻塞选定的信号。
+```c
+#include <signal.h>
+
+int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);   /* 根据how设置blocked位，并将旧blocked保存在oldset中 */
+int sigemptyset(sigset_t *set); /* 将集合设置为0x0 */
+int sigfillset(sigset_t *set);  /* 将集合设置为~0x0 */
+int sigaddset(sigset_t *set, int signum); /* 将信号signum添加到集合中 */
+int sigdelset(sigset_t *set, int signum); /* 将信号signum从集合中删除 */
+int sigismember(const sigset_t *set, int signum); /* 测试信号signum是否在集合中 */
+```
+
+#### 信号处理程序
+
