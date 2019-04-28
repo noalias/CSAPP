@@ -242,3 +242,14 @@ int sigismember(const sigset_t *set, int signum); /* 测试信号signum是否在
 
 #### 信号处理程序
 
+#### 非本地跳转
+非本地跳转，将控制直接从一个函数转移到另一个当前正在执行的函数。
+```c
+#include <setjmp.h>
+int setjmp(jmp_buf env);         /* 将当前调用环境保存在env中，并返回0 */
+int sigsetjmp(sigjmp_buf env. int savesigs);  
+
+#include <setjmp.h>
+void longjmp(jmp_buf env, int retval);  /* 调用longjmp函数后，释放env中的调用环境，即当前环境切换为最近一次调用setjmp的环境，并使setjmp返回retval */
+void siglongjmp(sigjmp_buf env, int retval);
+```
